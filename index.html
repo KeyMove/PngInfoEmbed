@@ -422,6 +422,7 @@
         <div class="main-canvas-container">
             <div class="main-canvas-header">
                 <span>封面预览区</span>
+                <button class="embed-button" id="downloadLink" style="display: none;" onclick="downloadlastfile()">下载文件</button>
                 <button class="embed-button" onclick="this.children[0].click()">导入
                     <input type="file" id="main-file-input" accept=".png, .jpg" style="display: none;" />
                 </button>
@@ -448,7 +449,7 @@
                         
                         <div id="infoContent" class="info-content"></div>
                     </div>
-                    <a id="downloadLink" class="download-link" style="display: none;">下载文件</a>
+                    
                 </div>
             </div>
 
@@ -688,6 +689,23 @@
         let previewFileData = null;
         let previewFileType = null;
 
+        let lastfile=null;
+        let lastfiletype='.bin';
+        function downloadlastfile(){
+            if(lastfile!=null){
+                const blob = new Blob([lastfile]);
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'object'+lastfiletype;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
         // 初始化画布背景
         function initCanvas() {
             // 主画布提示文字
@@ -853,6 +871,7 @@
             const { keyword, text } = info;
 
             if (keyword === 'image' && text) {
+                
                 // 显示图片
                 try {
                     const binaryString = atob(text);
@@ -860,7 +879,8 @@
                     for (let i = 0; i < binaryString.length; i++) {
                         bytes[i] = binaryString.charCodeAt(i);
                     }
-
+                    lastfile=bytes;
+                    lastfiletype='.png';
                     const blob = new Blob([bytes], { type: 'image/*' });
                     const url = URL.createObjectURL(blob);
 
@@ -882,7 +902,8 @@
                     for (let i = 0; i < binaryString.length; i++) {
                         bytes[i] = binaryString.charCodeAt(i);
                     }
-
+                    lastfile=bytes;
+                    lastfiletype='.mp4';
                     const blob = new Blob([bytes], { type: 'video/mp4' });
                     const url = URL.createObjectURL(blob);
 
@@ -899,17 +920,9 @@
                     for (let i = 0; i < binaryString.length; i++) {
                         bytes[i] = binaryString.charCodeAt(i);
                     }
-
-                    const blob = new Blob([bytes]);
-                    const url = URL.createObjectURL(blob);
-
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'downloaded_object.bin';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    lastfile=bytes;
+                    lastfiletype='.bin';
+                    downloadlastfile();
 
                     hideInfo();
                 } catch (e) {
@@ -918,8 +931,12 @@
                 }
             } else {
                 // 显示其他信息内容
+                lastfile=null;
                 displayInfoContent(JSON.stringify(info));
                 return true;
+            }
+            if(lastfile!=null){
+                downloadLink.style.display='block';
             }
             return false;
         }
