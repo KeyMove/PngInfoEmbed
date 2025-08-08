@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片嵌入页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 24px;
+            gap: 24px;
+        }
+
+        .main-canvas-container {
+            flex: 1;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .main-canvas-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .save-button {
+            background-color: #52c41a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-button:hover {
+            background-color: #73d13d;
+        }
+
+        .main-canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #mainCanvas {
+            background-color: #f8f8f8;
+            border: 1px dashed #ddd;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .sidebar {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .preview-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+        }
+
+        .preview-wrapper {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            background-color: #f8f8f8;
+            border: 1px solid #eee;
+        }
+
+        .embed-button-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .embed-button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .embed-button:hover {
+            background-color: #40a9ff;
+        }
+
+        .drop-area {
+            border: 2px dashed #1890ff;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            color: #1890ff;
+            background-color: #e6f7ff;
+        }
+
+        .drop-area p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .info-display {
+            padding: 16px;
+            background-color: #f0f8ff;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .info-display h3 {
+            margin-bottom: 8px;
+            color: #1890ff;
+        }
+
+        .info-content-wrapper {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .info-content {
+            word-break: break-all;
+            margin: 4px 0;
+            overflow: auto;
+            max-height: 80px;
+            padding-right: 10px;
+        }
+
+        .info-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background-color: #1890ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .download-link:hover {
+            background-color: #40a9ff;
+        }
+
+        /* 滚动条样式 */
+        .info-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .info-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .info-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .info-content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* 帮助按钮样式 */
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .help-button:hover {
+            background-color: #40a9ff;
+            transform: scale(1.1);
+        }
+
+        /* 引导遮罩层 */
+        .guide-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .guide-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .guide-content h3 {
+            margin-bottom: 15px;
+            color: #1890ff;
+        }
+
+        .guide-content p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .guide-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .guide-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .prev-button {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .next-button {
+            background-color: #1890ff;
+            color: white;
+        }
+
+        .skip-button {
+            background-color: #ff4d4f;
+            color: white;
+        }
+
+        .finish-button {
+            background-color: #52c41a;
+            color: white;
+        }
+
+        /* 高亮区域 */
+        .highlight-area {
+            position: absolute;
+            border: 3px solid #1890ff;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .highlight-tooltip {
+            position: absolute;
+            background-color: #1890ff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1001;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .highlight-tooltip::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 5px solid transparent;
+        }
+
+        .tooltip-top::after {
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-top-color: #1890ff;
+        }
+
+        .tooltip-bottom::after {
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-bottom-color: #1890ff;
+        }
+
+        /* 引导按钮容器 */
+        .guide-tooltip-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .guide-tooltip-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .prev-tooltip-button {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .next-tooltip-button {
+            background-color: #1890ff;
+            color: white;
+        }
+
+        .finish-tooltip-button {
+            background-color: #52c41a;
+            color: white;
+        }
+
+        .skip-tooltip-button {
+            background-color: #ff4d4f;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>图片嵌入处理工具</h1>
+    </div>
+
+    <div class="container">
+        <div class="main-canvas-container">
+            <div class="main-canvas-header">
+                <span>封面预览区</span>
+            </div>
+            <div class="main-canvas-wrapper" id="main-canvas-drag">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="preview-container">
+                <div class="preview-header">嵌入资源预览区</div>
+                <div class="preview-wrapper" id="preview-canvas-drag">
+                    <canvas id="previewCanvas" width="280" height="200"></canvas>
+                </div>
+                <div id="infoDisplay" class="info-display" style="display: none;">
+                    <h3>信息内容</h3>
+                    <div class="info-content-wrapper">
+                        <div id="infoContent" class="info-content"></div>
+                    </div>
+                    <a id="downloadLink" class="download-link" style="display: none;">下载文件</a>
+                </div>
+            </div>
+
+            <div class="embed-button-container">
+                <button class="embed-button" id="saveButton">嵌入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助按钮 -->
+    <button class="help-button" id="helpButton">?</button>
+
+    <script>
+        /**
+         * PNG信息处理类
+         * 提供PNG文件信息读取和写入功能
+         */
+        class PngInfoHandler {
+            /**
+             * 计算CRC32校验值
+             * @param {Uint8Array} data - 要计算CRC的数据
+             * @returns {number} 返回CRC32校验值
+             */
+            static crc32(data) {
+                const table = new Uint32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let c = i;
+                    for (let j = 0; j < 8; j++) {
+                        c = (c & 1) ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+                    }
+                    table[i] = c;
+                }
+
+                let crc = 0xFFFFFFFF;
+                for (let i = 0; i < data.length; i++) {
+                    crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+                }
+                return (crc ^ 0xFFFFFFFF) >>> 0;
+            }
+
+            /**
+             * 创建tEXt数据块
+             * @param {string} keyword - 关键字
+             * @param {string} text - 文本内容
+             * @returns {Uint8Array} 返回tEXt数据块的字节数据
+             */
+            static createTextChunk(keyword, text) {
+                // 将关键字和文本转换为字节数组
+                const keywordBytes = new TextEncoder().encode(keyword);
+                const textBytes = new TextEncoder().encode(text);
+
+                // 创建tEXt数据块内容（关键字 + null字符 + 文本）
+                const content = new Uint8Array(keywordBytes.length + 1 + textBytes.length);
+                content.set(keywordBytes, 0);
+                content[keywordBytes.length] = 0; // null分隔符
+                content.set(textBytes, keywordBytes.length + 1);
+
+                // 数据块长度
+                const length = content.length;
+
+                // 数据块类型 "tEXt"
+                const type = new Uint8Array([116, 69, 88, 116]); // tEXt
+
+                // 创建数据块（长度 + 类型 + 内容）
+                const chunk = new Uint8Array(4 + 4 + content.length);
+                const dv = new DataView(chunk.buffer);
+                dv.setUint32(0, length, false); // 长度（大端序）
+                chunk.set(type, 4); // 类型
+                chunk.set(content, 8); // 内容
+
+                // 计算CRC校验值（类型 + 内容）
+                const crcData = new Uint8Array(4 + content.length);
+                crcData.set(type, 0);
+                crcData.set(content, 4);
+                const crc = PngInfoHandler.crc32(crcData);
+
+                // 添加CRC校验值
+                const result = new Uint8Array(chunk.length + 4);
+                result.set(chunk, 0);
+                const crcDv = new DataView(result.buffer);
+                crcDv.setUint32(chunk.length, crc, false); // CRC（大端序）
+
+                return result;
+            }
+
+            /**
+             * 读取PNG文件中的文本信息
+             * @param {Uint8Array} data - PNG文件的字节数据
+             * @returns {Object|undefined} 返回PNG中的文本信息对象，如果没有找到则返回undefined
+             */
+            static readInfo(data) {
+                // 创建DataView用于读取数据
+                const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+
+                // PNG文件标识符
+                const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+
+                // 检查PNG文件头
+                for (let i = 0; i < 8; i++) {
+                    if (data[i] !== pngSignature[i]) return;
+                }
+
+                // tEXt数据块标识符
+                const tEXt = 0x74455874;
+
+                // 跳过PNG头和IHDR块（8字节头 + 4字节长度 + 4字节类型 + 13字节数据 + 4字节CRC）
+                let pos = 33;
+
+                // 循环读取数据块
+                while (pos < data.length - 8) {
+                    // 读取数据块长度（大端序）
+                    const len = view.getUint32(pos, false);
+                    pos += 4;
+
+                    // 读取数据块类型标识符
+                    const tag = view.getUint32(pos, false);
+                    pos += 4;
+
+                    // 如果不是tEXt数据块，跳过该数据块
+                    if (tag != tEXt) {
+                        pos += len + 4; // 跳过数据内容和CRC校验码
+                        continue;
+                    }
+
+                    // 如果是tEXt数据块，读取其中的文本信息
+                    const textData = new Uint8Array(data.buffer, data.byteOffset + pos, len);
+
+                    // 查找null字符位置分离keyword和text
+                    let nullIndex = -1;
+                    for (let i = 0; i < textData.length; i++) {
+                        if (textData[i] === 0) {
+                            nullIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (nullIndex !== -1) {
+                        const keywordArray = textData.slice(0, nullIndex);
+                        const textArray = textData.slice(nullIndex + 1);
+
+                        const keyword = new TextDecoder().decode(keywordArray);
+                        const text = new TextDecoder().decode(textArray);
+
+                        return {
+                            keyword: keyword,
+                            text: text
+                        };
+                    }
+
+                    pos += len + 4; // 跳过CRC校验码
+                }
+            }
+
+            /**
+             * 在PNG文件中添加或替换tEXt数据块
+             * @param {Uint8Array} pngData - 原始PNG数据
+             * @param {string} keyword - 关键字
+             * @param {string} text - 文本内容
+             * @returns {Uint8Array} 返回修改后的PNG数据
+             */
+            static addInfo(pngData, keyword, text) {
+                // PNG文件标识符检查
+                const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+                for (let i = 0; i < 8; i++) {
+                    if (pngData[i] !== pngSignature[i]) {
+                        throw new Error("无效的PNG文件");
+                    }
+                }
+
+                // 使用DataView读取数据
+                const view = new DataView(pngData.buffer, pngData.byteOffset, pngData.byteLength);
+
+                // 读取IHDR数据块的位置和大小
+                const ihdrLength = view.getUint32(8, false);
+                const ihdrEndPos = 8 + 4 + 4 + ihdrLength + 4; // PNG头 + 长度 + 类型 + 数据 + CRC
+
+                // 创建新的tEXt数据块
+                const textChunk = PngInfoHandler.createTextChunk(keyword, text);
+
+                // 查找现有的tEXt数据块并跳过它们
+                let insertPos = ihdrEndPos;
+                let pos = ihdrEndPos;
+
+                // 遍历数据块直到找到IEND或到达文件末尾
+                while (pos < pngData.length - 8) {
+                    // 读取数据块长度
+                    const chunkLength = view.getUint32(pos, false);
+                    // 读取数据块类型
+                    const chunkType = String.fromCharCode(pngData[pos + 4], pngData[pos + 5], pngData[pos + 6], pngData[pos + 7]);
+
+                    // 如果是IEND块，停止处理
+                    if (chunkType === 'IEND') {
+                        insertPos = pos;
+                        break;
+                    }
+
+                    // 如果是tEXt块，跳过它（不包含在新文件中）
+                    if (chunkType === 'tEXt') {
+                        pos += 4 + 4 + chunkLength + 4; // 长度 + 类型 + 数据 + CRC
+                        continue;
+                    }
+
+                    // 移动到下一个数据块
+                    pos += 4 + 4 + chunkLength + 4;
+                }
+
+                // 构建新的PNG文件
+                const beforeInsert = pngData.slice(0, insertPos);
+                const afterInsert = pngData.slice(insertPos);
+
+                const result = new Uint8Array(beforeInsert.length + textChunk.length + afterInsert.length);
+                result.set(beforeInsert, 0);
+                result.set(textChunk, beforeInsert.length);
+                result.set(afterInsert, beforeInsert.length + textChunk.length);
+
+                return result;
+            }
+        }
+
+        const mainCanvas = document.getElementById('mainCanvas');
+        const mainCtx = mainCanvas.getContext('2d');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
+        const saveButton = document.getElementById('saveButton');
+        const infoDisplay = document.getElementById('infoDisplay');
+        const infoContent = document.getElementById('infoContent');
+        const downloadLink = document.getElementById('downloadLink');
+        const helpButton = document.getElementById('helpButton');
+
+        const dragmain = document.getElementById('main-canvas-drag');
+        const dragprev = document.getElementById('preview-canvas-drag');
+
+        let mainVideo = null;
+        let previewVideo = null;
+        let previewFileData = null;
+        let previewFileType = null;
+
+        // 初始化画布背景
+        function initCanvas() {
+            // 主画布提示文字
+            mainCtx.fillStyle = '#f0f0f0';
+            mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+            mainCtx.fillStyle = '#999';
+            mainCtx.font = '16px sans-serif';
+            mainCtx.textAlign = 'center';
+            mainCtx.fillText('将图片拖拽或粘贴到此处作为封面', mainCanvas.width / 2, mainCanvas.height / 2);
+
+            // 预览画布提示文字
+            previewCtx.fillStyle = '#f0f0f0';
+            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+            previewCtx.fillStyle = '#999';
+            previewCtx.font = '14px sans-serif';
+            previewCtx.textAlign = 'center';
+            previewCtx.fillText('拖拽需要嵌入的图片或视频到此处', previewCanvas.width / 2, previewCanvas.height / 2);
+        }
+
+        /**
+         * 调整主画布CSS尺寸，保持原始宽高比，并居中适应容器（包含padding）
+         */
+        function adjustMainCanvasSize(canvas,setWidth,setHeight) {
+            const wrapper = (canvas!=mainCanvas)?dragprev:dragmain;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            let canvasWidth = canvas.width;
+            let canvasHeight = canvas.height;
+            // 设置画布尺寸为图片真实尺寸
+            if(canvas!=null && setWidth!=null && setHeight!=null){
+                canvasWidth = setWidth;
+                canvasHeight = setHeight;
+            }
+            else{
+                canvas=mainCanvas;
+                canvasWidth = canvas.width;
+                canvasHeight = canvas.height;
+            }
+            // 获取容器计算样式（包含padding）
+            const wrapperStyle = window.getComputedStyle(wrapper);
+            const paddingLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
+            const paddingRight = parseFloat(wrapperStyle.paddingRight) || 0;
+            const paddingTop = parseFloat(wrapperStyle.paddingTop) || 0;
+            const paddingBottom = parseFloat(wrapperStyle.paddingBottom) || 0;
+            
+            // 计算容器可用空间（减去padding）
+            const availableWidth = wrapperRect.width - paddingLeft - paddingRight;
+            const availableHeight = wrapperRect.height - paddingTop - paddingBottom;
+            
+            // 如果画布尺寸无效，直接返回
+            if (canvasWidth === 0 || canvasHeight === 0) return;
+            
+            // 计算画布宽高比
+            const aspectRatio = canvasWidth / canvasHeight;
+            
+            // 计算适应容器的目标尺寸
+            let targetWidth, targetHeight;
+            
+            // 如果画布比容器大，则缩放以适应
+            if (canvasWidth > availableWidth || canvasHeight > availableHeight) {
+                if (canvasWidth < canvasHeight) {
+                    // 容器更宽（相对于高度），按高度适配
+                    targetHeight = availableHeight;
+                    targetWidth = targetHeight * aspectRatio;
+                } else {
+                    // 容器更高（相对于宽度），按宽度适配
+                    targetWidth = availableWidth;
+                    targetHeight = targetWidth / aspectRatio;
+                }
+            } else {
+                // 画布比容器小，保持原始尺寸
+                targetWidth = canvasWidth;
+                targetHeight = canvasHeight;
+            }
+            canvas.width = setWidth;
+            canvas.height = setHeight;
+            // 设置CSS尺寸（保持宽高比）
+            canvas.style.width = targetWidth + 'px';
+            canvas.style.height = targetHeight + 'px';
+            
+            // 居中显示（通过自动外边距）
+            canvas.style.marginLeft = 'auto';
+            canvas.style.marginRight = 'auto';
+            canvas.style.marginTop = 'auto';
+            canvas.style.marginBottom = 'auto';
+            canvas.style.display = 'block';
+            
+            // 可选：添加调试信息（生产环境可移除）
+            //console.log(`画布适配: ${targetWidth}×${targetHeight} (容器可用: ${availableWidth}×${availableHeight})`);
+        }
+
+        // 绘制图片到画布
+        function drawImageToCanvas(canvas, ctx, img) {
+            // 调整主画布显示尺寸
+            //if (canvas === mainCanvas) {
+            //}
+            adjustMainCanvasSize(canvas,img.width,img.height);
+            
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制图片
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            
+        }
+
+        // 绘制视频到画布
+        function drawVideoToCanvas(canvas, ctx, video) {
+            if (video.readyState >= 2) {
+                adjustMainCanvasSize(canvas,video.videoWidth,video.videoHeight);
+                
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制视频
+                ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+                
+            }
+            requestAnimationFrame(() => drawVideoToCanvas(canvas, ctx, video));
+        }
+
+        // 处理拖入的PNG信息
+        function handlePngInfo(info) {
+            if (!info) {
+                hideInfo();
+                return true;
+            }
+
+            const { keyword, text } = info;
+
+            if (keyword === 'image' && text) {
+                // 显示图片
+                try {
+                    const binaryString = atob(text);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([bytes], { type: 'image/*' });
+                    const url = URL.createObjectURL(blob);
+
+                    const img = new Image();
+                    img.onload = function () {
+                        drawImageToCanvas(mainCanvas, mainCtx, img);
+                        URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                } catch (e) {
+                    console.error('解析图片数据时出错:', e);
+                    displayInfoContent(JSON.stringify(info));
+                }
+            } else if (keyword === 'video' && text) {
+                // 显示视频
+                try {
+                    const binaryString = atob(text);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([bytes], { type: 'video/mp4' });
+                    const url = URL.createObjectURL(blob);
+
+                    if (mainVideo) {
+                        mainVideo.pause();
+                        mainVideo = null;
+                    }
+
+                    mainVideo = document.createElement('video');
+                    mainVideo.src = url;
+                    mainVideo.loop = true;
+                    mainVideo.muted = true;
+                    mainVideo.play();
+                    mainVideo.onloadeddata = function () {
+                        drawVideoToCanvas(mainCanvas, mainCtx, mainVideo);
+                    };
+                } catch (e) {
+                    console.error('解析视频数据时出错:', e);
+                    displayInfoContent(JSON.stringify(info));
+                }
+            } else if (keyword === 'object' && text) {
+                // 直接下载
+                try {
+                    const binaryString = atob(text);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([bytes]);
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'downloaded_object.bin';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    hideInfo();
+                } catch (e) {
+                    console.error('下载对象时出错:', e);
+                    displayInfoContent(JSON.stringify(info));
+                }
+            } else {
+                // 显示其他信息内容
+                displayInfoContent(JSON.stringify(info));
+                return true;
+            }
+            return false;
+        }
+
+        // 显示信息内容
+        function displayInfoContent(content) {
+            infoDisplay.style.display = 'block';
+            infoContent.textContent = content;
+            downloadLink.style.display = 'none';
+        }
+
+        // 隐藏信息显示
+        function hideInfo() {
+            infoDisplay.style.display = 'none';
+            downloadLink.style.display = 'none';
+        }
+
+        function handleFileInput(canvas, ctx, isMainCanvas, file) {
+            if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const arrayBuffer = e.target.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+
+
+                    if (file.type.startsWith('image/')) {
+                        let reqDraw = true;
+                        if (file.type === 'image/png') {
+                            // 尝试读取PNG中的信息
+                            const info = PngInfoHandler.readInfo(bytes);
+                            if (isMainCanvas) {
+                                reqDraw = handlePngInfo(info);
+                            }
+                        } else if (isMainCanvas) {
+                            hideInfo();
+                        }
+
+                        if (isMainCanvas) {
+                            const img = new Image();
+                            img.onload = function () {
+                                if (reqDraw) {
+                                    drawImageToCanvas(canvas, ctx, img);
+                                }
+                            };
+                            img.src = URL.createObjectURL(file);
+                        } else {
+                            const img = new Image();
+                            img.onload = function () {
+                                drawImageToCanvas(canvas, ctx, img);
+                                previewFileData = arrayBuffer;
+                                previewFileType = 'image';
+                            };
+                            img.src = URL.createObjectURL(file);
+                        }
+                    } else if (file.type.startsWith('video/')) {
+                        // 如果是主画布且拖入视频，不处理
+                        if (isMainCanvas) {
+                            alert('主画布仅支持图片文件');
+                            return;
+                        }
+
+                        if (previewVideo) {
+                            previewVideo.pause();
+                            previewVideo = null;
+                        }
+
+                        previewVideo = document.createElement('video');
+                        previewVideo.src = URL.createObjectURL(file);
+                        previewVideo.loop = true;
+                        previewVideo.muted = true;
+                        previewVideo.play();
+                        previewVideo.onloadeddata = function () {
+                            drawVideoToCanvas(canvas, ctx, previewVideo);
+                            previewFileData = arrayBuffer;
+                            previewFileType = 'video';
+                        };
+                    }
+                };
+
+                reader.readAsArrayBuffer(file);
+            }
+        }
+        // 处理文件拖拽
+        function handleDrop(canvas, ctx, isMainCanvas, event) {
+            event.preventDefault();
+            const file = event.dataTransfer.files[0];
+            handleFileInput(canvas, ctx, isMainCanvas, file);
+
+        }
+
+        // 保存PNG按钮点击事件
+        function savePng() {
+            // 将主画布内容转换为PNG数据URL
+            mainCanvas.toBlob(function (blob) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const arrayBuffer = reader.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+
+                    // 确定关键字
+                    let keyword = 'object';
+                    if (previewFileType === 'video') {
+                        keyword = 'video';
+                    } else if (previewFileType === 'image') {
+                        keyword = 'image';
+                    }
+
+                    // 将预览区文件数据转换为base64
+                    let base64Data = '';
+                    if (previewFileData) {
+                        const previewBytes = new Uint8Array(previewFileData);
+                        let binary = '';
+                        for (let i = 0; i < previewBytes.length; i++) {
+                            binary += String.fromCharCode(previewBytes[i]);
+                        }
+                        base64Data = btoa(binary);
+                    }
+
+                    // 添加信息到PNG
+                    try {
+                        const newPngData = PngInfoHandler.addInfo(bytes, keyword, base64Data);
+
+                        // 创建下载链接
+                        const newBlob = new Blob([newPngData], { type: 'image/png' });
+                        const url = URL.createObjectURL(newBlob);
+
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'image_with_info.png';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } catch (e) {
+                        console.error('保存PNG时出错:', e);
+                        alert('保存PNG时出错: ' + e.message);
+                    }
+                };
+                reader.readAsArrayBuffer(blob);
+            }, 'image/png');
+        }
+
+        // 阻止默认拖拽行为
+        function preventDefaults(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        document.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const items = e.clipboardData.items;
+            if (!items || items.length === 0) return;
+            const item = items[0];
+            if (item.kind === 'file' && item.type.indexOf('image/') !== -1) {
+                const file = item.getAsFile();
+                handleFileInput(mainCanvas, mainCtx, true, file);
+            }
+        });
+        // 添加拖拽事件监听
+        function addDragListeners() {
+            // 主画布拖拽
+            dragmain.addEventListener('dragover', preventDefaults);
+            dragmain.addEventListener('dragenter', preventDefaults);
+            dragmain.addEventListener('drop', (e) => handleDrop(mainCanvas, mainCtx, true, e));
+
+            // 预览画布拖拽
+            dragprev.addEventListener('dragover', preventDefaults);
+            dragprev.addEventListener('dragenter', preventDefaults);
+            dragprev.addEventListener('drop', (e) => handleDrop(previewCanvas, previewCtx, false, e));
+        }
+
+        // 添加保存按钮事件监听
+        saveButton.addEventListener('click', savePng);
+
+        // 帮助引导功能
+        let currentStep = 0;
+        const guideSteps = [
+            {
+                element: mainCanvas,
+                message: "需要当作封面的图片拖入到这",
+                position: "bottom"
+            },
+            {
+                element: previewCanvas,
+                message: "需要嵌入隐藏的图片拖入到这",
+                position: "bottom"
+            },
+            {
+                element: saveButton,
+                message: "最后点击嵌入下载嵌入的图片",
+                position: "top"
+            }
+        ];
+
+        function showGuideOverlay() {
+            // 移除现有的高亮元素
+            const existingHighlight = document.querySelector('.highlight-area');
+            if (existingHighlight) existingHighlight.remove();
+
+            const existingTooltip = document.querySelector('.highlight-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+
+            if (currentStep >= guideSteps.length) {
+                // 引导结束
+                return;
+            }
+
+            const step = guideSteps[currentStep];
+            const element = step.element;
+            const rect = element.getBoundingClientRect();
+
+            // 创建高亮区域
+            const highlight = document.createElement('div');
+            highlight.className = 'highlight-area';
+            highlight.style.left = rect.left + 'px';
+            highlight.style.top = rect.top + 'px';
+            highlight.style.width = rect.width + 'px';
+            highlight.style.height = rect.height + 'px';
+            document.body.appendChild(highlight);
+
+            // 创建提示信息
+            const tooltip = document.createElement('div');
+            tooltip.className = `highlight-tooltip tooltip-${step.position}`;
+            tooltip.innerHTML = `${step.message}</div> <div class="guide-tooltip-buttons"> ${currentStep > 0 ? `上一步` : ''} ${currentStep < guideSteps.length - 1 ? `<button class="guide-tooltip-button next-tooltip-button" id="nextGuideTooltip">下一步</button>` : `<button class="guide-tooltip-button finish-tooltip-button" id="finishGuideTooltip">完成</button>`} <button class="guide-tooltip-button skip-tooltip-button" id="skipGuideTooltip">跳过</button> </div> `;
+            // 设置提示位置 
+            document.body.appendChild(tooltip); if (step.position === 'bottom') { tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px'; tooltip.style.top = rect.bottom + 10 + 'px'; } else { tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px'; tooltip.style.bottom = window.innerHeight - rect.top + 10 + 'px'; }
+            // 添加按钮事件
+            document.getElementById('prevGuideTooltip')?.addEventListener('click', () => { currentStep--; document.body.removeChild(highlight); document.body.removeChild(tooltip); showGuideOverlay(); }); document.getElementById('nextGuideTooltip')?.addEventListener('click', () => { currentStep++; document.body.removeChild(highlight); document.body.removeChild(tooltip); showGuideOverlay(); }); document.getElementById('finishGuideTooltip')?.addEventListener('click', () => {
+                document.body.removeChild(highlight); document.body.removeChild(tooltip); currentStep = guideSteps.length;
+                // 结束引导
+            }); document.getElementById('skipGuideTooltip').addEventListener('click', () => {
+                document.body.removeChild(highlight); document.body.removeChild(tooltip); currentStep = guideSteps.length;
+                // 结束引导 
+            });
+        }
+        // 帮助按钮点击事件 
+        helpButton.addEventListener('click', () => { currentStep = 0; showGuideOverlay(); });
+        // 初始化
+        window.onload = function () { 
+            // 设置主画布初始尺寸
+            mainCanvas.width = 800;
+            mainCanvas.height = 500;
+            initCanvas(); 
+            addDragListeners(); 
+            
+            // 监听窗口大小变化
+            window.addEventListener('resize', adjustMainCanvasSize);
+        }; 
+    </script>
+</body>
+
+</html>
