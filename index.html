@@ -91,10 +91,18 @@
             border: 1px dashed #ddd;
             max-width: 100%;
             max-height: 100%;
+            display: none;
+        }
+
+        #mainVideo {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
         }
 
         .sidebar {
             width: 30%;
+            min-width: 320px;
             display: flex;
             flex-direction: column;
             gap: 24px;
@@ -414,18 +422,24 @@
         <div class="main-canvas-container">
             <div class="main-canvas-header">
                 <span>封面预览区</span>
+                <button class="embed-button" onclick="this.children[0].click()">导入
+                    <input type="file" id="main-file-input" accept=".png, .jpg" style="display: none;" />
+                </button>
             </div>
-            <div class="main-canvas-wrapper" id="main-canvas-drag" onclick="this.children[0].click()">
-                <input type="file" id="main-file-input" accept=".png, .jpg" style="display: none;" />
+            <div class="main-canvas-wrapper" id="main-canvas-drag" >
                 <canvas id="mainCanvas"></canvas>
+                <video id="mainVideo" autoplay muted loop></video>
             </div>
         </div>
 
         <div class="sidebar">
             <div class="preview-container">
-                <div class="preview-header">嵌入资源预览区</div>
-                <div class="preview-wrapper" id="preview-canvas-drag" onclick="this.children[0].click()">
-                    <input type="file" id="prev-file-input" accept=".png, .jpg, .mp4" style="display: none;" />
+                <div class="preview-header">嵌入资源预览区
+                    <button class="embed-button" style="float: right;" onclick="this.children[0].click()">导入
+                        <input type="file" id="prev-file-input" accept=".png, .jpg, .mp4" style="display: none;" />
+                    </button>
+                </div>
+                <div class="preview-wrapper" id="preview-canvas-drag">
                     <canvas id="previewCanvas" width="280" height="200"></canvas>
                 </div>
                 <div id="infoDisplay" class="info-display" style="display: none;">
@@ -656,6 +670,7 @@
 
         const mainCanvas = document.getElementById('mainCanvas');
         const mainCtx = mainCanvas.getContext('2d');
+        const mainVideo = document.getElementById('mainVideo');
         const previewCanvas = document.getElementById('previewCanvas');
         const previewCtx = previewCanvas.getContext('2d');
         const saveButton = document.getElementById('saveButton');
@@ -669,7 +684,6 @@
         const dragmain = document.getElementById('main-canvas-drag');
         const dragprev = document.getElementById('preview-canvas-drag');
 
-        let mainVideo = null;
         let previewVideo = null;
         let previewFileData = null;
         let previewFileType = null;
@@ -697,10 +711,9 @@
          * 调整主画布CSS尺寸，保持原始宽高比，并居中适应容器（包含padding）
          */
         function adjustMainCanvasSize(canvas,setWidth,setHeight) {
-            const wrapper = (canvas!=mainCanvas)?dragprev:dragmain;
-            const wrapperRect = wrapper.getBoundingClientRect();
-            let canvasWidth = canvas.width;
-            let canvasHeight = canvas.height;
+            let canvasWidth;
+            let canvasHeight;
+            let setcanvas=true;
             // 设置画布尺寸为图片真实尺寸
             if(canvas!=null && setWidth!=null && setHeight!=null){
                 canvasWidth = setWidth;
@@ -708,9 +721,13 @@
             }
             else{
                 canvas=mainCanvas;
-                canvasWidth = canvas.width;
-                canvasHeight = canvas.height;
+                setWidth = canvasWidth = canvas.width;
+                setHeight = canvasHeight = canvas.height;
+                setcanvas=false;
             }
+            const wrapper = (canvas!=previewCanvas)?dragmain:dragprev;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
             // 获取容器计算样式（包含padding）
             const wrapperStyle = window.getComputedStyle(wrapper);
             const paddingLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
@@ -747,8 +764,10 @@
                 targetWidth = canvasWidth;
                 targetHeight = canvasHeight;
             }
-            canvas.width = setWidth;
-            canvas.height = setHeight;
+            if(setcanvas){
+                canvas.width = setWidth;
+                canvas.height = setHeight;
+            }
             // 设置CSS尺寸（保持宽高比）
             canvas.style.width = targetWidth + 'px';
             canvas.style.height = targetHeight + 'px';
@@ -758,7 +777,7 @@
             canvas.style.marginRight = 'auto';
             canvas.style.marginTop = 'auto';
             canvas.style.marginBottom = 'auto';
-            canvas.style.display = 'block';
+            //canvas.style.display = 'block';
             
             // 可选：添加调试信息（生产环境可移除）
             //console.log(`画布适配: ${targetWidth}×${targetHeight} (容器可用: ${availableWidth}×${availableHeight})`);
@@ -778,6 +797,35 @@
             // 绘制图片
             ctx.drawImage(img, 0, 0, img.width, img.height);
             
+        }
+
+        // 显示图片到主区域
+        function showImageInMain(img) {
+            // 隐藏视频，显示画布
+            mainVideo.style.display = 'none';
+            mainCanvas.style.display = 'block';
+            
+            // 调整画布尺寸
+            adjustMainCanvasSize(mainCanvas, img.width, img.height);
+            
+            // 清除画布并绘制图片
+            mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            mainCtx.drawImage(img, 0, 0, img.width, img.height);
+        }
+
+        // 显示视频到主区域
+        function showVideoInMain(videoUrl) {
+            // 隐藏画布，显示视频
+            mainCanvas.style.display = 'none';
+            mainVideo.style.display = 'block';
+            
+            // 设置视频源
+            mainVideo.src = videoUrl;
+            
+            // 调整视频尺寸
+            mainVideo.onloadedmetadata = function() {
+                adjustMainCanvasSize(mainVideo, mainVideo.videoWidth, mainVideo.videoHeight);
+            };
         }
 
         // 绘制视频到画布
@@ -818,7 +866,7 @@
 
                     const img = new Image();
                     img.onload = function () {
-                        drawImageToCanvas(mainCanvas, mainCtx, img);
+                        showImageInMain(img);
                         URL.revokeObjectURL(url);
                     };
                     img.src = url;
@@ -838,19 +886,7 @@
                     const blob = new Blob([bytes], { type: 'video/mp4' });
                     const url = URL.createObjectURL(blob);
 
-                    if (mainVideo) {
-                        mainVideo.pause();
-                        mainVideo = null;
-                    }
-
-                    mainVideo = document.createElement('video');
-                    mainVideo.src = url;
-                    mainVideo.loop = true;
-                    mainVideo.muted = true;
-                    mainVideo.play();
-                    mainVideo.onloadeddata = function () {
-                        drawVideoToCanvas(mainCanvas, mainCtx, mainVideo);
-                    };
+                    showVideoInMain(url);
                 } catch (e) {
                     console.error('解析视频数据时出错:', e);
                     displayInfoContent(JSON.stringify(info));
@@ -925,7 +961,7 @@
                             const img = new Image();
                             img.onload = function () {
                                 if (reqDraw) {
-                                    drawImageToCanvas(canvas, ctx, img);
+                                    showImageInMain(img);
                                 }
                             };
                             img.src = URL.createObjectURL(file);
@@ -1139,6 +1175,9 @@
             
             // 监听窗口大小变化
             window.addEventListener('resize', adjustMainCanvasSize);
+
+            mainVideo.style.display = 'none';
+            mainCanvas.style.display = 'block';
         }; 
     </script>
 </body>
