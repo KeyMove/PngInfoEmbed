@@ -1,4 +1,4 @@
-# ImageInfo - 图片信息隐藏工具
+# PngInfoEmbed - 图片信息隐藏工具
 
 [![在线体验](https://img.shields.io/badge/在线体验-点击使用-blue?style=for-the-badge&logo=github)](https://keymove.github.io/PngInfoEmbed/)
 
