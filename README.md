@@ -1,6 +1,6 @@
 # ImageInfo - 图片信息隐藏工具
 
-[![在线体验](https://img.shields.io/badge/在线体验-点击使用-blue?style=for-the-badge&logo=github)](https://keymove.github.io/ImageInfo/)
+[![在线体验](https://img.shields.io/badge/在线体验-点击使用-blue?style=for-the-badge&logo=github)](https://keymove.github.io/PngInfoEmbed/)
 
 ## 📌 项目简介
 
@@ -36,7 +36,7 @@ ImageInfo 是一个基于Web的图片信息隐藏工具，可以将任意文件�
 
 ## 🌐 在线体验
 
-**[点击这里立即体验](https://keymove.github.io/ImageInfo/)**
+**[点击这里立即体验](https://keymove.github.io/PngInfoEmbed/)**
 
 ## 📜 开源协议
 
